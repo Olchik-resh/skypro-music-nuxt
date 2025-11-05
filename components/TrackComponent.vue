@@ -40,21 +40,21 @@
 </template>
 
 <script setup>
-defineProps({
-  track: {
-    type: Object,
-    required: true,
-    default: () => ({
-      id: 0,
-      title: "",
-      author: "",
-      album: "",
-      duration: "",
-      genre: "",
-      year: 0,
-    }),
-  },
-});
+// defineProps({
+//   track: {
+//     type: Object,
+//     required: true,
+//     default: () => ({
+//       id: 0,
+//       title: "",
+//       author: "",
+//       album: "",
+//       duration: "",
+//       genre: "",
+//       year: 0,
+//     }),
+//   },
+// });
 </script>
 
 <style lang="css">

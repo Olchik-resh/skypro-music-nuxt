@@ -22,11 +22,6 @@
   </nav>
 </template>
 <script setup>
-// import { ref } from "vue";
-// const isMenuVisible = ref(false);
-// const toggleMenu = () => {
-//   isMenuVisible.value = !isMenuVisible.value;
-// };
 </script>
 <style lang="css">
 .main__nav {
