@@ -21,23 +21,23 @@
 </template>
 
 <script setup>
-// defineProps({
-//   tracks: {
-//     type: Array,
-//     default: () => [],
-//   },
-//   pending: {
-//     type: Boolean,
-//     default: false,
-//   },
-//   error: {
-//     type: Object,
-//     default: null,
-//   },
-// });
+defineProps({
+  tracks: {
+    type: Array,
+    default: () => [],
+  },
+  pending: {
+    type: Boolean,
+    default: false,
+  },
+  error: {
+    type: Object,
+    default: null,
+  },
+});
 </script>
 
-<style lang="css">
+<style lang="css" scoped>
 .content__playlist {
   display: flex;
   flex-direction: column;
