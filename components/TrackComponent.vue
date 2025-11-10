@@ -4,34 +4,25 @@
       <div class="track__title">
         <div class="track__title-image">
           <svg class="track__title-svg">
-            <use xlink:href="/img/sprite.svg#icon-note"></use>
+            <use xlink:href="#icon-note"></use>
           </svg>
         </div>
         <div class="track__title-text">
           <a class="track__title-link" href="http://">
             {{ track.title }}
-            <span
-              v-if="track.title && track.title.includes('(Remix)')"
-              class="track__title-span"
-            >
-              (Remix)
-            </span>
+            <!-- Добавляем проверку на наличие ремикса -->
           </a>
         </div>
       </div>
       <div class="track__author">
-        <a class="track__author-link" href="http://">
-          {{ track.author || "Неизвестный исполнитель" }}
-        </a>
+        <a class="track__author-link" href="http://">{{ track.artist }}</a>
       </div>
       <div class="track__album">
-        <a class="track__album-link" href="http://">
-          {{ track.album || "Без альбома" }}
-        </a>
+        <a class="track__album-link" href="http://">{{ track.album }}</a>
       </div>
       <div class="track__time">
         <svg class="track__time-svg">
-          <use xlink:href="/img/sprite.svg#icon-like"></use>
+          <use xlink:href="#icon-like"></use>
         </svg>
         <span class="track__time-text">{{ track.duration }}</span>
       </div>
@@ -40,24 +31,24 @@
 </template>
 
 <script setup>
-// defineProps({
-//   track: {
-//     type: Object,
-//     required: true,
-//     default: () => ({
-//       id: 0,
-//       title: "",
-//       author: "",
-//       album: "",
-//       duration: "",
-//       genre: "",
-//       year: 0,
-//     }),
-//   },
-// });
+defineProps({
+  track: {
+    type: Object,
+    required: true,
+    default: () => ({
+      id: 0,
+      title: "",
+      artist: "",
+      album: "",
+      duration: "",
+      genre: "",
+      year: 0,
+    }),
+  },
+});
 </script>
 
-<style lang="css">
+<style lang="css" scoped>
 .playlist__track {
   display: -webkit-box;
   display: -ms-flexbox;
