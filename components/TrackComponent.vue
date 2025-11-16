@@ -4,25 +4,34 @@
       <div class="track__title">
         <div class="track__title-image">
           <svg class="track__title-svg">
-            <use xlink:href="#icon-note"></use>
+            <use xlink:href="/img/sprite.svg#icon-note"></use>
           </svg>
         </div>
         <div class="track__title-text">
           <a class="track__title-link" href="http://">
             {{ track.title }}
-            <!-- Добавляем проверку на наличие ремикса -->
+            <span
+              v-if="track.title && track.title.includes('(Remix)')"
+              class="track__title-span"
+            >
+              (Remix)
+            </span>
           </a>
         </div>
       </div>
       <div class="track__author">
-        <a class="track__author-link" href="http://">{{ track.artist }}</a>
+        <a class="track__author-link" href="http://">
+          {{ track.author || "Неизвестный исполнитель" }}
+        </a>
       </div>
       <div class="track__album">
-        <a class="track__album-link" href="http://">{{ track.album }}</a>
+        <a class="track__album-link" href="http://">
+          {{ track.album || "Без альбома" }}
+        </a>
       </div>
       <div class="track__time">
         <svg class="track__time-svg">
-          <use xlink:href="#icon-like"></use>
+          <use xlink:href="/img/sprite.svg#icon-like"></use>
         </svg>
         <span class="track__time-text">{{ track.duration }}</span>
       </div>
@@ -38,7 +47,7 @@ defineProps({
     default: () => ({
       id: 0,
       title: "",
-      artist: "",
+      author: "",
       album: "",
       duration: "",
       genre: "",
@@ -142,6 +151,11 @@ defineProps({
   width: 245px;
 }
 
+.track__time {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 .track__album-link {
   font-style: normal;
   font-weight: 400;

@@ -5,6 +5,11 @@
       <div class="playlist-title__col col01">Трек</div>
       <div class="playlist-title__col col02">Исполнитель</div>
       <div class="playlist-title__col col03">Альбом</div>
+      <div class="playlist-title__col col04">
+        <svg class="playlist-title__svg">
+          <use xlink:href="/img/sprite.svg#icon-watch"></use>
+        </svg>
+      </div>
     </div>
 
     <!-- Контент -->
@@ -41,7 +46,9 @@ defineProps({
 .content__playlist {
   display: flex;
   flex-direction: column;
+  max-height: 700px;
   overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .playlist-title__col {
@@ -64,7 +71,7 @@ defineProps({
   width: 447px;
 }
 .col02 {
-  width: 321px;
+  width: 346px;
 }
 .col03 {
   width: 245px;
