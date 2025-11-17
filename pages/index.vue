@@ -17,10 +17,13 @@
             />
           </div>
           <h2 class="centerblock__h2">Треки</h2>
-          <FilterControlsComponent :tracks="validTracks" />
+          <FilterControlsComponent
+            :tracks="validTracks"
+            @update:filter="onFilterUpdate"
+          />
 
           <PlaylistComponent
-            :tracks="validTracks"
+            :tracks="filteredTracks"
             :pending="pending"
             :error="error"
           />
@@ -75,11 +78,13 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import NavbarComponent from "~/components/NavbarComponent.vue";
 import PlaylistComponent from "~/components/PlaylistComponent.vue";
 import FilterControlsComponent from "~/components/FilterControlsComponent.vue";
-import { computed } from "vue";
+import PlayerBarComponent from "~/components/PlayerBarComponent.vue";
+import { ref, computed } from "vue";
 
 const formatDuration = (seconds) => {
   if (!seconds) return "0:00";
@@ -87,6 +92,7 @@ const formatDuration = (seconds) => {
   const remainingSeconds = seconds % 60;
   return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
 };
+
 const {
   data: response,
   pending,
@@ -111,6 +117,38 @@ const {
 );
 
 const validTracks = computed(() => response.value || []);
+
+const filterType = ref(null);
+const filterValue = ref(null);
+
+function onFilterUpdate({ type, value }) {
+  filterType.value = type;
+  filterValue.value = value;
+}
+
+const filteredTracks = computed(() => {
+  if (!filterType.value || !filterValue.value) return validTracks.value;
+  if (filterType.value === "author") {
+    return validTracks.value.filter(
+      (track) => track.author === filterValue.value
+    );
+  }
+  if (filterType.value === "genre") {
+    return validTracks.value.filter((track) => {
+      if (Array.isArray(track.genre)) {
+        return track.genre.includes(filterValue.value);
+      }
+      return track.genre === filterValue.value;
+    });
+  }
+  if (filterType.value === "year") {
+    return validTracks.value.filter((track) => {
+      const year = track.release_date?.split("-")[0] || "Неизвестно";
+      return year === filterValue.value;
+    });
+  }
+  return validTracks.value;
+});
 </script>
 
 <style lang="css">

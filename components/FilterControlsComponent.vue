@@ -14,7 +14,12 @@
       <transition name="fade">
         <div v-if="activeFilter === 'author'" class="filter__dropdown">
           <ul class="filter__list">
-            <li v-for="item in authorItems" :key="item" class="filter__item">
+            <li
+              v-for="item in authorItems"
+              :key="item"
+              class="filter__item"
+              @click="selectAuthor(item)"
+            >
               {{ item }}
             </li>
           </ul>
@@ -34,7 +39,12 @@
       <transition name="fade">
         <div v-if="activeFilter === 'year'" class="filter__dropdown">
           <ul class="filter__list">
-            <li v-for="item in yearItems" :key="item" class="filter__item">
+            <li
+              v-for="item in yearItems"
+              :key="item"
+              class="filter__item"
+              @click="selectYear(item)"
+            >
               {{ item }}
             </li>
           </ul>
@@ -54,7 +64,12 @@
       <transition name="fade">
         <div v-if="activeFilter === 'genre'" class="filter__dropdown">
           <ul class="filter__list">
-            <li v-for="item in genreItems" :key="item" class="filter__item">
+            <li
+              v-for="item in genreItems"
+              :key="item"
+              class="filter__item"
+              @click="selectGenre(item)"
+            >
               {{ item }}
             </li>
           </ul>
@@ -65,28 +80,36 @@
 </template>
 
 <script setup>
+import { ref, computed } from "vue";
 const props = defineProps({
   tracks: {
     type: Array,
     default: () => [],
   },
 });
+const emit = defineEmits(["update:filter"]);
 
 const activeFilter = ref(null);
-
 const toggleFilter = (filter) => {
   activeFilter.value = activeFilter.value === filter ? null : filter;
 };
 
-// Обработка авторов
+function selectAuthor(author) {
+  emit("update:filter", { type: "author", value: author });
+}
+function selectYear(year) {
+  emit("update:filter", { type: "year", value: year });
+}
+function selectGenre(genre) {
+  emit("update:filter", { type: "genre", value: genre });
+}
+
 const authorItems = computed(() => {
   if (!props.tracks?.length) return [];
   const items = new Set();
   props.tracks.forEach((track) => track.author && items.add(track.author));
   return sortItems(Array.from(items), "Неизвестно");
 });
-
-// Обработка годов
 const yearItems = computed(() => {
   if (!props.tracks?.length) return [];
   const items = new Set();
@@ -96,8 +119,6 @@ const yearItems = computed(() => {
   });
   return sortItems(Array.from(items), "Неизвестно", true);
 });
-
-// Обработка жанров
 const genreItems = computed(() => {
   if (!props.tracks?.length) return [];
   const items = new Set();
@@ -108,7 +129,6 @@ const genreItems = computed(() => {
   return sortItems(Array.from(items), "неизвестно");
 });
 
-// Универсальная сортировка
 const sortItems = (arr, unknownWord, isNumeric = false) => {
   return arr.sort((a, b) => {
     if (a === unknownWord) return 1;
