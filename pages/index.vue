@@ -109,7 +109,8 @@ const {
           album: track.album || "Без альбома",
           duration: formatDuration(track.duration_in_seconds),
           release_date: track.release_date || "Неизвестно",
-          genre: track.genre || ["Неизвестно"],
+          genre: track.genre || "Неизвестно",
+          track_file: track.track_file || "",
         }))
         .filter((track) => track.title !== "Без названия");
     },
@@ -118,36 +119,32 @@ const {
 
 const validTracks = computed(() => response.value || []);
 
-const filterType = ref(null);
-const filterValue = ref(null);
+// Новый объект фильтров
+const filters = ref({ author: null, year: null, genre: null });
 
-function onFilterUpdate({ type, value }) {
-  filterType.value = type;
-  filterValue.value = value;
+// Функция обновления одного фильтра
+function onFilterUpdate(newFilters) {
+  filters.value = { ...newFilters };
 }
 
+// Комбинированная фильтрация
 const filteredTracks = computed(() => {
-  if (!filterType.value || !filterValue.value) return validTracks.value;
-  if (filterType.value === "author") {
-    return validTracks.value.filter(
-      (track) => track.author === filterValue.value
-    );
-  }
-  if (filterType.value === "genre") {
-    return validTracks.value.filter((track) => {
+  return validTracks.value.filter((track) => {
+    if (filters.value.author && track.author !== filters.value.author)
+      return false;
+    if (filters.value.genre) {
       if (Array.isArray(track.genre)) {
-        return track.genre.includes(filterValue.value);
+        if (!track.genre.includes(filters.value.genre)) return false;
+      } else if (track.genre !== filters.value.genre) {
+        return false;
       }
-      return track.genre === filterValue.value;
-    });
-  }
-  if (filterType.value === "year") {
-    return validTracks.value.filter((track) => {
+    }
+    if (filters.value.year) {
       const year = track.release_date?.split("-")[0] || "Неизвестно";
-      return year === filterValue.value;
-    });
-  }
-  return validTracks.value;
+      if (year !== filters.value.year) return false;
+    }
+    return true;
+  });
 });
 </script>
 

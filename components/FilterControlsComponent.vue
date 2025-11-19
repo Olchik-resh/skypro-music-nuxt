@@ -81,61 +81,80 @@
 
 <script setup>
 import { ref, computed } from "vue";
-const props = defineProps({
-  tracks: {
-    type: Array,
-    default: () => [],
-  },
-});
+const props = defineProps({ tracks: { type: Array, default: () => [] } });
 const emit = defineEmits(["update:filter"]);
 
 const activeFilter = ref(null);
+const filters = ref({ author: null, year: null, genre: null });
+
 const toggleFilter = (filter) => {
   activeFilter.value = activeFilter.value === filter ? null : filter;
 };
 
 function selectAuthor(author) {
-  emit("update:filter", { type: "author", value: author });
+  filters.value.author = author;
+  emitFilters();
 }
 function selectYear(year) {
-  emit("update:filter", { type: "year", value: year });
+  filters.value.year = year;
+  emitFilters();
 }
 function selectGenre(genre) {
-  emit("update:filter", { type: "genre", value: genre });
+  filters.value.genre = genre;
+  emitFilters();
+}
+
+function emitFilters() {
+  emit("update:filter", { ...filters.value });
+}
+
+function sortItems(items, unknownLabel = "Неизвестно", numeric = false) {
+  const filtered = items.filter((item) => item !== unknownLabel);
+  filtered.sort(numeric ? (a, b) => a - b : undefined);
+  if (items.includes(unknownLabel)) filtered.push(unknownLabel);
+  return filtered;
 }
 
 const authorItems = computed(() => {
   if (!props.tracks?.length) return [];
   const items = new Set();
-  props.tracks.forEach((track) => track.author && items.add(track.author));
+  props.tracks.forEach((track) => {
+    if (track.author) items.add(track.author);
+  });
   return sortItems(Array.from(items), "Неизвестно");
 });
+
 const yearItems = computed(() => {
   if (!props.tracks?.length) return [];
   const items = new Set();
   props.tracks.forEach((track) => {
-    const year = track.release_date?.split("-")[0] || "Неизвестно";
-    items.add(year);
+    const year = track.release_date?.split("-")[0];
+    if (year) {
+      items.add(year);
+    } else {
+      items.add("Неизвестно");
+    }
   });
   return sortItems(Array.from(items), "Неизвестно", true);
 });
+
 const genreItems = computed(() => {
   if (!props.tracks?.length) return [];
   const items = new Set();
   props.tracks.forEach((track) => {
-    const genres = Array.isArray(track.genre) ? track.genre : [track.genre];
-    genres.filter(Boolean).forEach((g) => items.add(g.trim()));
+    if (track.genre) {
+      const genres = Array.isArray(track.genre) ? track.genre : [track.genre];
+      genres.forEach((g) => {
+        if (g && g.trim()) {
+          items.add(g.trim());
+        }
+      });
+    } else {
+      items.add("неизвестно");
+    }
   });
   return sortItems(Array.from(items), "неизвестно");
 });
-
-const sortItems = (arr, unknownWord, isNumeric = false) => {
-  return arr.sort((a, b) => {
-    if (a === unknownWord) return 1;
-    if (b === unknownWord) return -1;
-    return isNumeric ? Number(b) - Number(a) : a.localeCompare(b);
-  });
-};
 </script>
 
 <style lang="css" scoped>
