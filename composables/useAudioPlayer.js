@@ -14,22 +14,14 @@ export function useAudioPlayer() {
   };
 
   // Воспроизведение трека
-  const playTrack = async (track) => {
-    try {
-      if (playerStore.currentTrack?.id !== track.id) {
-        playerStore.setCurrentTrack(track);
-        playerStore.audioRef.src = track.track_file;
-      }
-
-      // Всегда используем актуальное currentTime из хранилища
-      playerStore.audioRef.currentTime = playerStore.currentTime; // <-- Важно
-      await playerStore.audioRef.play();
-      playerStore.setPlaying(true);
-    } catch (error) {
-      console.error("Ошибка воспроизведения:", error);
-      playerStore.setPlaying(false);
-    }
-  };
+async function playTrack() {
+  try {
+    if (!playerStore.audioRef) return;
+    await playerStore.audioRef.play();
+  } catch (err) {
+    console.error('Ошибка воспроизведения:', err);
+  }
+}
   // Пауза трека
   const pauseTrack = () => {
     if (playerStore.audioRef) {
@@ -63,11 +55,16 @@ export function useAudioPlayer() {
   const seekTo = (percentage) => {
     if (!playerStore.audioRef || !playerStore.currentTrack) return;
 
-    const newTime = (percentage / 100) * playerStore.audioRef.duration;
-    playerStore.audioRef.currentTime = newTime;
+    const duration = playerStore.audioRef.duration;
+    // Проверяем, что duration — конечное число
+    if (typeof duration !== "number" || !isFinite(duration) || duration <= 0) {
+      console.warn("Попытка перемотки, но duration не определён или равен 0");
+      return;
+    }
 
-    // Обновляем текущее время в хранилище сразу при перемотке
-    playerStore.setCurrentTime(newTime); // <-- Ключевое изменение
+    const newTime = (percentage / 100) * duration;
+    playerStore.audioRef.currentTime = newTime;
+    playerStore.setCurrentTime(newTime);
     playerStore.setProgress(percentage);
   };
 
@@ -77,20 +74,33 @@ export function useAudioPlayer() {
     playerStore.audioRef.volume = playerStore.volume / 100;
   };
 
-  // Настройка обработчиков событий
-  const setupEventListeners = () => {
+  // // Настройка обработчиков событий
+  // const setupEventListeners = () => {
+  //   if (!playerStore.audioRef) return;
+
+  //   playerStore.audioRef.addEventListener("playing", () => {
+  //     playerStore.setPlaying(true);
+  //   });
+
+  //   playerStore.audioRef.addEventListener("pause", () => {
+  //     playerStore.setPlaying(false);
+  //   });
+
+  //   playerStore.audioRef.addEventListener("ended", handleTrackEnd);
+  // };
+
+  function setupEventListeners() {
     if (!playerStore.audioRef) return;
 
-    playerStore.audioRef.addEventListener("playing", () => {
-      playerStore.setPlaying(true);
-    });
-
-    playerStore.audioRef.addEventListener("pause", () => {
-      playerStore.setPlaying(false);
-    });
-
+    playerStore.audioRef.addEventListener("timeupdate", handleTimeUpdate);
     playerStore.audioRef.addEventListener("ended", handleTrackEnd);
-  };
+    playerStore.audioRef.addEventListener("playing", () =>
+      playerStore.setPlaying(true)
+    );
+    playerStore.audioRef.addEventListener("pause", () =>
+      playerStore.setPlaying(false)
+    );
+  }
 
   return {
     initPlayer,

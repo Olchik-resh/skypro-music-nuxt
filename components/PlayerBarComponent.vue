@@ -23,7 +23,9 @@
               <svg class="player__btn-play-svg">
                 <use
                   :xlink:href="
-                    playerStore.isPlaying ? '/img/sprite.svg#icon-pause' : '/img/sprite.svg#icon-play'
+                    playerStore.isPlaying
+                      ? '/img/sprite.svg#icon-pause'
+                      : '/img/sprite.svg#icon-play'
                   "
                 ></use>
               </svg>

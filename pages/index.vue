@@ -130,19 +130,30 @@ function onFilterUpdate(newFilters) {
 // Комбинированная фильтрация
 const filteredTracks = computed(() => {
   return validTracks.value.filter((track) => {
-    if (filters.value.author && track.author !== filters.value.author)
+    // --- Фильтр по автору ---
+    if (
+      filters.value.author &&
+      filters.value.author.length &&
+      !filters.value.author.includes(track.author)
+    )
       return false;
-    if (filters.value.genre) {
-      if (Array.isArray(track.genre)) {
-        if (!track.genre.includes(filters.value.genre)) return false;
-      } else if (track.genre !== filters.value.genre) {
+
+    // --- Фильтр по жанру ---
+    if (filters.value.genre && filters.value.genre.length) {
+      const trackGenres = Array.isArray(track.genre)
+        ? track.genre
+        : [track.genre];
+      // хотя бы один из жанров должен быть выбран
+      if (!trackGenres.some((g) => filters.value.genre.includes(g)))
         return false;
-      }
     }
-    if (filters.value.year) {
+
+    // --- Фильтр по году ---
+    if (filters.value.year && filters.value.year.length) {
       const year = track.release_date?.split("-")[0] || "Неизвестно";
-      if (year !== filters.value.year) return false;
+      if (!filters.value.year.includes(year)) return false;
     }
+
     return true;
   });
 });
