@@ -33,6 +33,7 @@ body {
   height: 100%;
   font-family: "Roboto", sans-serif;
   color: #ffffff;
+  overflow: hidden;
 }
 
 ._btn-text:hover {

@@ -1,7 +1,12 @@
 <template>
   <div class="bar">
     <div class="bar__content">
-      <div class="bar__player-progress"></div>
+      <div class="bar__player-progress" @click="handleProgressClick">
+        <div
+          class="progress-indicator"
+          :style="{ width: playerStore.progress + '%' }"
+        ></div>
+      </div>
       <div class="bar__player-block">
         <div class="bar__player player">
           <div class="player__controls">
@@ -10,9 +15,19 @@
                 <use xlink:href="/img/sprite.svg#icon-prev"></use>
               </svg>
             </div>
-            <div class="player__btn-play _btn">
+            <div
+              class="player__btn-play _btn"
+              :class="{ 'is-playing': playerStore.isPlaying }"
+              @click="handlePlay"
+            >
               <svg class="player__btn-play-svg">
-                <use xlink:href="/img/sprite.svg#icon-play"></use>
+                <use
+                  :xlink:href="
+                    playerStore.isPlaying
+                      ? '/img/sprite.svg#icon-pause'
+                      : '/img/sprite.svg#icon-play'
+                  "
+                ></use>
               </svg>
             </div>
             <div class="player__btn-next">
@@ -40,10 +55,14 @@
                 </svg>
               </div>
               <div class="track-play__author">
-                <a class="track-play__author-link" href="http://">Ты та...</a>
+                <a class="track-play__author-link" href="#">{{
+                  playerStore.currentTrack?.author || "Выберите трек"
+                }}</a>
               </div>
               <div class="track-play__album">
-                <a class="track-play__album-link" href="http://">Баста</a>
+                <a class="track-play__album-link" href="#">{{
+                  playerStore.currentTrack?.album || ""
+                }}</a>
               </div>
             </div>
 
@@ -70,19 +89,72 @@
             </div>
             <div class="volume__progress _btn">
               <input
+                v-model="playerStore.volume"
                 class="volume__progress-line _btn"
                 type="range"
                 name="range"
+                min="0"
+                max="100"
+                @input="updateVolume"
               />
             </div>
           </div>
         </div>
       </div>
     </div>
+    <audio
+      ref="audioRef"
+      @timeupdate="handleTimeUpdate"
+      @ended="handleTrackEnd"
+    />
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import { usePlayerStore } from "~/stores/player";
+
+// Получаем store
+const playerStore = usePlayerStore();
+const audioRef = ref(null);
+
+// Получаем функции из composable
+const {
+  playTrack,
+  pauseTrack,
+  handleTimeUpdate,
+  handleTrackEnd,
+  seekTo,
+  updateVolume,
+  initPlayer,
+} = useAudioPlayer();
+
+// Обработчик клика по кнопке play
+const handlePlay = () => {
+  if (!playerStore.currentTrack) return;
+
+  if (playerStore.isPlaying) {
+    pauseTrack();
+  } else {
+    // Передаем текущий трек
+    playTrack(playerStore.currentTrack);
+  }
+};
+
+// Обработчик клика по прогресс-бару, чтобы перемотать трек
+const handleProgressClick = (event) => {
+  if (!playerStore.currentTrack) return;
+
+  const progressBar = event.currentTarget;
+  const rect = progressBar.getBoundingClientRect();
+  const clickPosition = event.clientX - rect.left;
+  const percentage = (clickPosition / rect.width) * 100;
+  seekTo(percentage);
+};
+
+onMounted(() => {
+  initPlayer(audioRef.value);
+});
+</script>
 
 <style lang="css">
 .bar {
@@ -104,9 +176,18 @@
   flex-direction: column;
 }
 .bar__player-progress {
+  position: relative;
   width: 100%;
   height: 5px;
   background: #2e2e2e;
+  cursor: pointer;
+
+  .progress-indicator {
+    position: absolute;
+    height: 100%;
+    background: #1a73e8;
+    transition: width 0.2s ease;
+  }
 }
 .bar__player-block {
   height: 73px;
