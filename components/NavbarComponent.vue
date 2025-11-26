@@ -17,7 +17,7 @@
           <a href="#" class="menu__link">Мой плейлист</a>
         </li>
         <li class="menu__item">
-          <a href="/SignIn" class="menu__link">Войти</a>
+          <a href="/signin" class="menu__link">Войти</a>
         </li>
       </ul>
     </div>

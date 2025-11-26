@@ -3,6 +3,15 @@ import { usePlayerStore } from "~/stores/player";
 export function useAudioPlayer() {
   const playerStore = usePlayerStore();
 
+  watchEffect(() => {
+    if (playerStore.progress >= 100 && playerStore.isPlaying) {
+      playerStore.audioRef.pause();
+      playerStore.setPlaying(false);
+      playerStore.setCurrentTime(0);
+      playerStore.setProgress(0);
+    }
+  });
+
   // Инициализация плеера
   const initPlayer = (element) => {
     if (!element) {
@@ -14,14 +23,14 @@ export function useAudioPlayer() {
   };
 
   // Воспроизведение трека
-async function playTrack() {
-  try {
-    if (!playerStore.audioRef) return;
-    await playerStore.audioRef.play();
-  } catch (err) {
-    console.error('Ошибка воспроизведения:', err);
+  async function playTrack() {
+    try {
+      if (!playerStore.audioRef) return;
+      await playerStore.audioRef.play();
+    } catch (err) {
+      console.error("Ошибка воспроизведения:", err);
+    }
   }
-}
   // Пауза трека
   const pauseTrack = () => {
     if (playerStore.audioRef) {
@@ -48,7 +57,8 @@ async function playTrack() {
   // Обработка окончания трека
   const handleTrackEnd = () => {
     playerStore.setPlaying(false);
-    // Здесь можно добавить логику для перехода к следующему треку
+    playerStore.setCurrentTime(0);
+    playerStore.setProgress(0);
   };
 
   // Перемотка
@@ -73,21 +83,6 @@ async function playTrack() {
     if (!playerStore.audioRef) return;
     playerStore.audioRef.volume = playerStore.volume / 100;
   };
-
-  // // Настройка обработчиков событий
-  // const setupEventListeners = () => {
-  //   if (!playerStore.audioRef) return;
-
-  //   playerStore.audioRef.addEventListener("playing", () => {
-  //     playerStore.setPlaying(true);
-  //   });
-
-  //   playerStore.audioRef.addEventListener("pause", () => {
-  //     playerStore.setPlaying(false);
-  //   });
-
-  //   playerStore.audioRef.addEventListener("ended", handleTrackEnd);
-  // };
 
   function setupEventListeners() {
     if (!playerStore.audioRef) return;

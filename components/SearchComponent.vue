@@ -1,0 +1,33 @@
+<template>
+  <div class="centerblock__search search">
+    <svg class="search__svg">
+      <use xlink:href="/img/sprite.svg#icon-search" />
+    </svg>
+    <input
+      class="search__text"
+      type="search"
+      placeholder="Поиск"
+      name="search"
+    />
+  </div>
+</template>
+
+<script setup></script>
+
+<style lang="css">
+.centerblock__search {
+  width: 100%;
+  border-bottom: 1px solid #4e4e4e;
+  margin-bottom: 51px;
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-orient: horizontal;
+  -webkit-box-direction: normal;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-box-align: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+</style>
