@@ -1,23 +1,21 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
 
 export const useTracksStore = defineStore("tracks", {
   state: () => ({
-    rawTracks: ref([]),
-    pending: ref(false),
-    error: ref(null),
-    filters: ref({
+    rawTracks: [],
+    pending: false,
+    error: null,
+    filters: {
       author: [],
       year: [],
       genre: [],
       search: "",
-    }),
+    },
   }),
 
   actions: {
     async fetchTracks() {
       this.pending = true;
-
       try {
         const { data } = await $fetch(
           "https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/"
