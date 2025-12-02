@@ -30,7 +30,7 @@ const playlistMap = {
 const playlistFilterRules = {
   day: (_track) => true,
   dance: (track) => {
-    const danceGenres = ["электронная музыка", "рок музыка"];
+    const danceGenres = ["электронная музыка"];
     return track.genre.some((g) => danceGenres.includes(g.toLowerCase()));
   },
   indie: (track) => {

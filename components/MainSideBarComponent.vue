@@ -18,7 +18,7 @@
           :class="{ active: route.params.id === playlist.id }"
         >
           <NuxtLink class="sidebar__link" :to="`/category/${playlist.id}`">
-            <img
+            <NuxtImg
               class="sidebar__img"
               :src="getImagePath(playlist.image)"
               :alt="playlist.title"
@@ -99,7 +99,7 @@ const getImagePath = (imageName) => `/img/${imageName}`;
 
 .sidebar__block {
   height: 100%;
-  padding: 240px 0 0 0;
+  padding: 140px 0 0 0;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;

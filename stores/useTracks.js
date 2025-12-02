@@ -18,7 +18,8 @@ export const useTracksStore = defineStore("tracks", {
       this.pending = true;
       try {
         const { data } = await $fetch(
-          "https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/"
+          "https://webdev-music-003b5b991590.herokuapp.com/catalog/track/all/",
+          { lazy: true }
         );
         this.rawTracks = data.map((track) => ({
           id: track._id,

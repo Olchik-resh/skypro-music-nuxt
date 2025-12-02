@@ -14,7 +14,12 @@
 
     <!-- Контент -->
     <div class="content__playlist playlist">
-      <TrackComponent v-for="track in tracks" :key="track.id" :track="track" />
+      <TrackComponent
+        v-for="track in tracks"
+        :key="track.id"
+        :track="track"
+        :playlist="{ id: 'current', tracks: tracks }"
+      />
     </div>
 
     <!-- Состояние загрузки -->
@@ -26,7 +31,7 @@
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
   tracks: {
     type: Array,
     default: () => [],
@@ -39,6 +44,13 @@ defineProps({
     type: Object,
     default: null,
   },
+});
+const playerStore = usePlayerStore();
+
+onMounted(() => {
+  if (playerStore.playlist.length === 0 && props.tracks?.length) {
+    playerStore.setPlaylist(props.tracks);
+  }
 });
 </script>
 
@@ -71,7 +83,7 @@ defineProps({
   width: 447px;
 }
 .col02 {
-  width: 346px;
+  width: 321px;
 }
 .col03 {
   width: 245px;

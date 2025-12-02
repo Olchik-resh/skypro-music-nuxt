@@ -5,7 +5,13 @@
         <form class="modal__form-login" @submit.prevent="handleSubmit">
           <NuxtLink :to="isSignUp ? '/signin' : '/signup'">
             <div class="modal__logo">
-              <img src="/img/logo_modal.png" alt="logo" />
+              <NuxtImg
+                src="/img/logo_modal.png"
+                alt="logo"
+                loading="eager"
+                format="png"
+                quality="100"
+              />
             </div>
           </NuxtLink>
           <!-- Блок отображения ошибок -->
