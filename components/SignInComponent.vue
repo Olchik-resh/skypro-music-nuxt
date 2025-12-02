@@ -1,48 +1,62 @@
 <template>
-  <div class="wrapper">
+  <div class="auth-wrapper">
     <div class="container-signup">
       <div class="modal__block">
         <form class="modal__form-login" @submit.prevent="handleSubmit">
-          <NuxtLink to="/">
+          <NuxtLink :to="isSignUp ? '/signin' : '/signup'">
             <div class="modal__logo">
-              <img src="/assets/img/logo_modal.png" alt="logo" />
+              <img src="/img/logo_modal.png" alt="logo" />
             </div>
           </NuxtLink>
-
+          <!-- Блок отображения ошибок -->
+          <div v-if="userStore.error" class="error-message">
+            {{ userStore.error }}
+          </div>
           <input
-            v-model.trim="form.email"
+            v-model.trim="email"
             class="modal__input"
             type="email"
             placeholder="Почта"
+            @input="userStore.error = null"
           />
-
           <input
-            v-model.trim="form.password"
+            v-model.trim="password"
             class="modal__input"
             type="password"
             placeholder="Пароль"
+            @input="userStore.error = null"
           />
-
           <input
             v-if="isSignUp"
-            v-model.trim="form.confirmPassword"
+            v-model.trim="confirmPassword"
             class="modal__input"
             type="password"
             placeholder="Повторите пароль"
+            @input="userStore.error = null"
           />
 
-          <button class="modal__btn-submit" type="submit">
-            {{ isSignUp ? "Зарегистрироваться" : "Войти" }}
-          </button>
-
           <button
-            v-if="!isSignUp"
-            class="modal__btn-switch"
-            type="button"
-            @click="$router.push('/signup')"
+            v-if="isSignUp"
+            class="modal__btn-submit"
+            type="submit"
+            :disabled="userStore.loading"
           >
-            Зарегистрироваться
+            <span v-if="!userStore.loading">Зарегистрироваться</span>
+            <span v-else>Обработка...</span>
           </button>
+          <template v-else>
+            <button
+              class="modal__btn-submit"
+              type="submit"
+              :disabled="userStore.loading"
+            >
+              <span v-if="!userStore.loading">Войти</span>
+              <span v-else>Обработка...</span>
+            </button>
+            <button class="modal__btn-switch" type="button" @click="goToSignUp">
+              Зарегистрироваться
+            </button>
+          </template>
         </form>
       </div>
     </div>
@@ -50,65 +64,92 @@
 </template>
 
 <script setup>
-const route = useRoute();
-const isSignUp = computed(() => route.path.includes("signup"));
+import { ref, onMounted } from "vue";
+import { useUserStore } from "~/stores/useUser";
+import { useRouter } from "vue-router";
 
-const form = reactive({
-  email: "",
-  password: "",
-  confirmPassword: "",
+const props = defineProps({
+  isSignUp: Boolean,
 });
+const router = useRouter();
+const userStore = useUserStore();
 
-const validateForm = () => {
-  //Пробелы и пустые поля
-  const fieldsToCheck = isSignUp.value
-    ? ["email", "password", "confirmPassword"]
-    : ["email", "password"];
+const email = ref("");
+const password = ref("");
+const confirmPassword = ref("");
 
-  for (const field of fieldsToCheck) {
-    if (!form[field].trim()) {
-      alert(
-        `Поле ${
-          field === "email" ? "Почта" : "Пароль"
-        } обязательно для заполнения`
-      );
-      return false;
+const goToSignUp = () => router.push("/signup");
+
+// Валидация email
+const validateEmail = (email) => {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+};
+
+const handleSubmit = async () => {
+  try {
+    userStore.error = null;
+
+    if (!email.value || !password.value) {
+      userStore.error = "Заполните все обязательные поля";
+      return;
     }
-  }
 
-  // Проверка совпадения паролей при регистрации
-  if (isSignUp.value && form.password !== form.confirmPassword) {
-    alert("Пароли не совпадают");
-    return false;
-  }
+    if (props.isSignUp) {
+      if (password.value !== confirmPassword.value) {
+        userStore.error = "Пароли не совпадают";
+        return;
+      }
 
-  return true;
+      if (!validateEmail(email.value)) {
+        userStore.error = "Введите корректный email";
+        return;
+      }
+
+      await userStore.setUser({
+        email: email.value,
+        password: password.value,
+        username: email.value.split("@")[0],
+      });
+
+      router.push("/");
+    } else {
+      if (!validateEmail(email.value)) {
+        userStore.error = "Введите корректный email";
+        return;
+      }
+
+      await userStore.setUser({
+        email: email.value,
+        password: password.value,
+      });
+    }
+
+    router.push("/");
+  } catch (error) {
+    userStore.error = error.message || "Ошибка авторизации";
+    console.error("Ошибка:", error.message);
+  }
 };
 
-const handleSubmit = () => {
-  if (!validateForm()) return;
-
-  // будет вызов API
-  console.log("Форма валидна, данные:", {
-    email: form.email,
-    password: form.password,
-  });
-};
+onMounted(() => {
+  userStore.error = null;
+});
 </script>
 
-<style lang="scss" scoped>
-.wrapper {
-  background-color: #000; 
+<style lang="css">
+.auth-wrapper {
   min-height: 100vh;
+  background: rgba(49, 49, 49, 1);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .modal__block {
-  background: white; 
+  background: white;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); 
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 366px;
   padding: 40px;
 }
@@ -121,58 +162,76 @@ const handleSubmit = () => {
 
 .modal__input {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #d0cece; 
-  border-radius: 6px;
+  padding: 8px 16px;
+  border: none;
+  border-bottom: 1px solid rgba(208, 206, 206, 1);
   font-size: 16px;
   color: #333;
-  background-color: transparent; 
+  background-color: transparent;
 
   &:focus {
-    border-color: #580ea2;
     outline: none;
   }
 }
 
 .modal__btn-submit {
   width: 100%;
+  margin-top: 40px;
   padding: 14px;
-  background-color: #580ea2; 
+  background-color: rgba(88, 14, 162, 1);
   color: white;
   border: none;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 
   &:hover {
-    background-color: #3f007d; 
+    background-color: rgba(63, 0, 125, 1);
+  }
+  &:active {
+    background-color: rgba(39, 26, 88, 1);
   }
 }
 
 .modal__btn-switch {
   width: 100%;
   padding: 14px;
-  background-color: #f5f5f5; 
-  color: #666; 
+  background: rgba(255, 255, 255, 1);
+  color: rgba(0, 0, 0, 1);
   border: 1px solid #d0cece;
   border-radius: 6px;
-  font-size: 16px;
+  font-size: 18px;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
-    background-color: #d0cece;
+    background-color: rgba(244, 245, 246, 1);
+    border-color: 1px solid rgba(208, 206, 206, 1);
+  }
+  &:active {
+    background-color: rgba(217, 217, 217, 1);
+    border-color: 1px solid rgba(208, 206, 206, 1);
   }
 }
 
 .modal__logo {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 23px;
 
   img {
     max-width: 140px;
     height: auto;
   }
+}
+
+.error-message {
+  color: #ff4d4d;
+  background: #ffe6e6;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  border: 1px solid #ffcccc;
+  font-size: 14px;
 }
 </style>
