@@ -1,7 +1,14 @@
 <template>
   <nav class="main__nav nav">
     <div class="nav__logo logo">
-      <img class="logo__image" src="/public/img/logo.png" />
+      <NuxtImg
+        alt="Логотип"
+        :placeholder="[5]"
+        src="/img/logo.png"
+        loading="eager"
+        format="png"
+        quality="100"
+      />
     </div>
     <div class="nav__burger burger" @click="toggleMenu">
       <span class="burger__line"></span>

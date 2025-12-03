@@ -10,7 +10,11 @@
       <div class="bar__player-block">
         <div class="bar__player player">
           <div class="player__controls">
-            <div class="player__btn-prev">
+            <div
+              class="player__btn-prev _btn"
+              :disabled="!hasPrevTrack || !playerStore.currentTrack"
+              @click="handlePrevTrack"
+            >
               <svg class="player__btn-prev-svg">
                 <use xlink:href="/img/sprite.svg#icon-prev"></use>
               </svg>
@@ -30,17 +34,29 @@
                 ></use>
               </svg>
             </div>
-            <div class="player__btn-next">
+            <div
+              class="player__btn-next _btn"
+              :disabled="!hasNextTrack"
+              @click="handleNextTrack"
+            >
               <svg class="player__btn-next-svg">
                 <use xlink:href="/img/sprite.svg#icon-next"></use>
               </svg>
             </div>
-            <div class="player__btn-repeat _btn-icon">
+            <div
+              class="player__btn-repeat _btn-icon"
+              :class="{ 'is-active': playerStore.isLoop }"
+              @click="playerStore.toggleLoop"
+            >
               <svg class="player__btn-repeat-svg">
                 <use xlink:href="/img/sprite.svg#icon-repeat"></use>
               </svg>
             </div>
-            <div class="player__btn-shuffle _btn-icon">
+            <div
+              class="player__btn-shuffle _btn-icon"
+              :class="{ 'is-active': playerStore.isShuffle }"
+              @click="playerStore.toggleShuffle"
+            >
               <svg class="player__btn-shuffle-svg">
                 <use xlink:href="/img/sprite.svg#icon-shuffle"></use>
               </svg>
@@ -112,48 +128,70 @@
 
 <script setup>
 import { usePlayerStore } from "~/stores/player";
+import { useAudioPlayer } from "~/composables/useAudioPlayer";
 
 // Получаем store
 const playerStore = usePlayerStore();
+
+const { initPlayer, handleTimeUpdate, handleTrackEnd, seekTo, updateVolume } =
+  useAudioPlayer();
+
 const audioRef = ref(null);
 
-// Получаем функции из composable
-const {
-  playTrack,
-  pauseTrack,
-  handleTimeUpdate,
-  handleTrackEnd,
-  seekTo,
-  updateVolume,
-  initPlayer,
-} = useAudioPlayer();
+const hasNextTrack = computed(() => {
+  return playerStore.hasNextTrack;
+});
 
-// Обработчик клика по кнопке play
-const handlePlay = () => {
-  if (!playerStore.currentTrack) return;
+const hasPrevTrack = computed(() => {
+  return playerStore.hasPrevTrack;
+});
 
-  if (playerStore.isPlaying) {
-    pauseTrack();
-  } else {
-    // Передаем текущий трек
-    playTrack(playerStore.currentTrack);
-  }
-};
-
-// Обработчик клика по прогресс-бару, чтобы перемотать трек
 const handleProgressClick = (event) => {
-  if (!playerStore.currentTrack) return;
-
-  const progressBar = event.currentTarget;
-  const rect = progressBar.getBoundingClientRect();
-  const clickPosition = event.clientX - rect.left;
-  const percentage = (clickPosition / rect.width) * 100;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const percentage = ((event.clientX - rect.left) / rect.width) * 100;
   seekTo(percentage);
 };
 
-onMounted(() => {
-  initPlayer(audioRef.value);
-});
+const handleNextTrack = async () => {
+  try {
+    await playerStore.nextTrack();
+
+    if (playerStore.audioRef) {
+      await playerStore.audioRef.play();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  console.groupEnd();
+};
+
+const handlePrevTrack = async () => {
+  try {
+    await playerStore.prevTrack();
+
+    if (playerStore.audioRef) {
+      await playerStore.audioRef.play();
+    }
+  } catch (error) {
+    console.error("Error:", error);
+  }
+  console.groupEnd();
+};
+
+const handlePlay = () => {
+  const audio = audioRef.value;
+  if (!audio) return;
+
+  if (playerStore.isPlaying) {
+    audio.pause();
+    playerStore.isPlaying = false;
+  } else {
+    audio.play();
+    playerStore.isPlaying = true;
+  }
+};
+
+onMounted(() => initPlayer(audioRef.value));
 </script>
 
 <style lang="css">
@@ -283,6 +321,12 @@ onMounted(() => {
   height: 12px;
   fill: transparent;
   stroke: #696969;
+  transition: inherit;
+
+  .is-active & {
+    stroke: #ad61ff;
+    fill: #ad61ff;
+  }
 }
 .player__btn-shuffle {
   display: -webkit-box;
@@ -297,6 +341,22 @@ onMounted(() => {
   height: 12px;
   fill: transparent;
   stroke: #696969;
+  transition: inherit;
+
+  .is-active & {
+    stroke: #ad61ff;
+    fill: #ad61ff;
+  }
+}
+
+.is-active {
+  svg {
+    filter: drop-shadow(0 0 2px rgba(173, 97, 255, 0.4));
+  }
+
+  &:hover {
+    transform: scale(1.05);
+  }
 }
 .player__track-play {
   display: -webkit-box;
