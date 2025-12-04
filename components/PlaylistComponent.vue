@@ -11,7 +11,7 @@
         </svg>
       </div>
     </div>
-
+   
     <!-- Контент -->
     <div class="content__playlist playlist">
       <TrackComponent
@@ -31,6 +31,8 @@
 </template>
 
 <script setup>
+import TrackComponent from "./TrackComponent.vue";
+
 const props = defineProps({
   tracks: {
     type: Array,

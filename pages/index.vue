@@ -41,6 +41,22 @@ onMounted(async () => {
   }
 });
 
+onMounted(async () => {
+  if (tracksStore.rawTracks.length === 0) {
+    await tracksStore.fetchTracks();
+  }
+});
+
+watch(
+  () => tracksStore.filteredTracks,
+  (newTracks) => {
+    if (playerStore.playlist.length === 0 && newTracks.length) {
+      playerStore.setPlaylist(newTracks);
+    }
+  },
+  { immediate: true }
+);
+
 useHead({
   title: "Главная | Skypro.Music",
   meta: [

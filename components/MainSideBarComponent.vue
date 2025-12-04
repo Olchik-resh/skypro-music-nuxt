@@ -3,6 +3,7 @@
     <div class="sidebar__personal">
       <p v-if="username && !userStore.loading">{{ username }}</p>
       <p v-else>{{ username }}</p>
+
       <NuxtLink to="/signin" class="sidebar__icon" @click="handleLogout">
         <svg>
           <use xlink:href="/img/sprite.svg#logout" />
@@ -15,7 +16,7 @@
           v-for="playlist in playlists"
           :key="playlist.id"
           class="sidebar__item"
-          :class="{ active: route.params.id === playlist.id }"
+          :class="{ active: $route.params.id === playlist.id }"
         >
           <NuxtLink class="sidebar__link" :to="`/category/${playlist.id}`">
             <NuxtImg
@@ -32,12 +33,12 @@
 
 <script setup>
 import { computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "~/stores/useUser";
 
 const router = useRouter();
-const route = useRoute();
+
 const userStore = useUserStore();
 const { user } = storeToRefs(userStore);
 const username = computed(() => user.value?.username || null);
@@ -98,7 +99,6 @@ const getImagePath = (imageName) => `/img/${imageName}`;
 }
 
 .sidebar__block {
-  height: 100%;
   padding: 140px 0 0 0;
   display: -webkit-box;
   display: -ms-flexbox;

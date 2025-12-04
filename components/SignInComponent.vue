@@ -3,7 +3,7 @@
     <div class="container-signup">
       <div class="modal__block">
         <form class="modal__form-login" @submit.prevent="handleSubmit">
-          <NuxtLink :to="isSignUp ? '/signin' : '/signup'">
+          <NuxtLink to="/">
             <div class="modal__logo">
               <NuxtImg
                 src="/img/logo_modal.png"
@@ -14,10 +14,12 @@
               />
             </div>
           </NuxtLink>
+
           <!-- Блок отображения ошибок -->
           <div v-if="userStore.error" class="error-message">
             {{ userStore.error }}
           </div>
+
           <input
             v-model.trim="email"
             class="modal__input"
@@ -25,6 +27,7 @@
             placeholder="Почта"
             @input="userStore.error = null"
           />
+
           <input
             v-model.trim="password"
             class="modal__input"
@@ -32,6 +35,7 @@
             placeholder="Пароль"
             @input="userStore.error = null"
           />
+
           <input
             v-if="isSignUp"
             v-model.trim="confirmPassword"
@@ -42,27 +46,24 @@
           />
 
           <button
-            v-if="isSignUp"
             class="modal__btn-submit"
             type="submit"
             :disabled="userStore.loading"
           >
-            <span v-if="!userStore.loading">Зарегистрироваться</span>
+            <span v-if="!userStore.loading">
+              {{ isSignUp ? "Зарегистрироваться" : "Войти" }}
+            </span>
             <span v-else>Обработка...</span>
           </button>
-          <template v-else>
-            <button
-              class="modal__btn-submit"
-              type="submit"
-              :disabled="userStore.loading"
-            >
-              <span v-if="!userStore.loading">Войти</span>
-              <span v-else>Обработка...</span>
-            </button>
-            <button class="modal__btn-switch" type="button" @click="goToSignUp">
-              Зарегистрироваться
-            </button>
-          </template>
+
+          <button
+            v-if="!isSignUp"
+            class="modal__btn-switch"
+            type="button"
+            @click="$router.push('/signup')"
+          >
+            Зарегистрироваться
+          </button>
         </form>
       </div>
     </div>
@@ -70,21 +71,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { useUserStore } from "~/stores/useUser";
-import { useRouter } from "vue-router";
+import { ref, computed, onMounted } from "vue";
 
-const props = defineProps({
-  isSignUp: Boolean,
-});
+const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
 
+const isSignUp = computed(() => route.path.includes("signup"));
 const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
-
-const goToSignUp = () => router.push("/signup");
 
 // Валидация email
 const validateEmail = (email) => {
@@ -101,7 +97,7 @@ const handleSubmit = async () => {
       return;
     }
 
-    if (props.isSignUp) {
+    if (isSignUp.value) {
       if (password.value !== confirmPassword.value) {
         userStore.error = "Пароли не совпадают";
         return;
@@ -112,19 +108,19 @@ const handleSubmit = async () => {
         return;
       }
 
+      // Обновленный вызов для регистрации
       await userStore.setUser({
         email: email.value,
         password: password.value,
         username: email.value.split("@")[0],
       });
-
-      router.push("/");
     } else {
       if (!validateEmail(email.value)) {
         userStore.error = "Введите корректный email";
         return;
       }
 
+      // Обновленный вызов для входа
       await userStore.setUser({
         email: email.value,
         password: password.value,
@@ -133,11 +129,11 @@ const handleSubmit = async () => {
 
     router.push("/");
   } catch (error) {
-    userStore.error = error.message || "Ошибка авторизации";
     console.error("Ошибка:", error.message);
   }
 };
 
+// Очистка ошибок при размонтировании
 onMounted(() => {
   userStore.error = null;
 });
@@ -226,8 +222,8 @@ onMounted(() => {
   margin-bottom: 23px;
 
   img {
-    max-width: 140px;
-    height: auto;
+    width: 140px;
+    height: 21px;
   }
 }
 
