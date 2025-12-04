@@ -1,5 +1,13 @@
 import { defineStore } from "pinia";
 
+import {
+  formatDuration,
+  filterTracks,
+  getAvailableFilters,
+  updateFilters,
+  resetFilters,
+} from "@/utils/tracksUtils";
+
 export const useTracksStore = defineStore("tracks", {
   state: () => ({
     rawTracks: [],
@@ -26,7 +34,7 @@ export const useTracksStore = defineStore("tracks", {
           title: track.name || "Без названия",
           author: track.author || "Неизвестный исполнитель",
           album: track.album || "Без альбома",
-          duration: this.formatDuration(track.duration_in_seconds),
+          duration: formatDuration(track.duration_in_seconds),
           release_date: track.release_date?.slice(0, 4) || "Неизвестно",
           genre: Array.isArray(track.genre)
             ? track.genre
@@ -47,62 +55,17 @@ export const useTracksStore = defineStore("tracks", {
     },
 
     updateFilter(payload) {
-      this.filters = { ...this.filters, ...payload };
+      this.filters = updateFilters(this.filters, payload);
     },
 
     resetFilters() {
-      this.filters = {
-        author: [],
-        year: [],
-        genre: [],
-        search: "",
-      };
+      this.filters = resetFilters();
     },
   },
 
   getters: {
-    filteredTracks: (state) => {
-      return state.rawTracks.filter((track) => {
-        const matchesSearch =
-          track.title
-            .toLowerCase()
-            .includes(state.filters.search.toLowerCase()) ||
-          track.author
-            .toLowerCase()
-            .includes(state.filters.search.toLowerCase());
+    filteredTracks: (state) => filterTracks(state.rawTracks, state.filters),
 
-        const matchesAuthor =
-          !state.filters.author.length ||
-          state.filters.author.includes(track.author);
-
-        const matchesYear =
-          !state.filters.year.length ||
-          state.filters.year.includes(track.release_date);
-
-        const matchesGenre =
-          !state.filters.genre.length ||
-          track.genre.some((g) => state.filters.genre.includes(g));
-
-        return matchesSearch && matchesAuthor && matchesYear && matchesGenre;
-      });
-    },
-
-    availableFilters: (state) => {
-      const authors = new Set();
-      const years = new Set();
-      const genres = new Set();
-
-      state.rawTracks.forEach((track) => {
-        authors.add(track.author);
-        years.add(track.release_date);
-        track.genre.forEach((g) => genres.add(g));
-      });
-
-      return {
-        authors: Array.from(authors).sort(),
-        years: Array.from(years).sort().reverse(),
-        genres: Array.from(genres).sort(),
-      };
-    },
+    availableFilters: (state) => getAvailableFilters(state.rawTracks),
   },
 });
