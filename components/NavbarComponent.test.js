@@ -22,11 +22,9 @@ describe("NavBarComponent", () => {
   it("управляет видимостью меню по клику на бургер", async () => {
     const burger = wrapper.find(".burger");
 
-    // Первый клик - открытие
     await burger.trigger("click");
     expect(wrapper.find(".menu").isVisible()).toBe(true);
 
-    // Второй клик - закрытие
     await burger.trigger("click");
     expect(wrapper.find(".menu").exists()).toBe(false);
   });

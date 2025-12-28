@@ -9,32 +9,22 @@ export const formatDuration = (seconds) => {
 };
 
 export const filterTracks = (tracks, filters = {}) => {
-  const safeFilters = filters || {};
-  const searchLower = safeFilters.search?.toLowerCase() || "";
+  const { authors = [], genres = [], years = [], search = "" } = filters;
+
+  const searchLower = search.toLowerCase();
 
   return tracks.filter((track) => {
-    // Поиск
     const matchesSearch =
       track.title.toLowerCase().includes(searchLower) ||
       track.author.toLowerCase().includes(searchLower);
 
-    // Автор
-    const authorFilter = safeFilters.author;
+   
     const matchesAuthor =
-      !authorFilter?.length || authorFilter.includes(track.author);
-
-    // Год
-    const yearFilter = safeFilters.year;
+      authors.length === 0 || authors.includes(track.author);
     const matchesYear =
-      !yearFilter?.length || yearFilter.includes(track.release_date);
-
-    // Жанр
-    const genreFilter = safeFilters.genre;
-    const trackGenres = Array.isArray(track.genre)
-      ? track.genre
-      : [track.genre];
+      years.length === 0 || years.includes(track.release_date);
     const matchesGenre =
-      !genreFilter?.length || genreFilter.some((g) => trackGenres.includes(g));
+      genres.length === 0 || track.genre.some((g) => genres.includes(g));
 
     return matchesSearch && matchesAuthor && matchesYear && matchesGenre;
   });
@@ -64,8 +54,8 @@ export const updateFilters = (currentFilters, newFilters) => ({
 });
 
 export const resetFilters = () => ({
-  author: [],
-  year: [],
-  genre: [],
+  author: "",
+  genre: "",
+  year: "",
   search: "",
 });

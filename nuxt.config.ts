@@ -13,4 +13,9 @@ export default defineNuxtConfig({
   image: {
     provider: "ipx",
   },
+  googleFonts: {
+    families: {
+      Montserrat: [400, 700],
+    },
+  },
 });

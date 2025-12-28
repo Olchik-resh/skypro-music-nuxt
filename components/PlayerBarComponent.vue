@@ -1,25 +1,26 @@
 <template>
-  <div class="bar">
+  <div v-if="playerStore.currentTrack" class="bar">
     <div class="bar__content">
       <div class="bar__player-progress" @click="handleProgressClick">
         <div
           class="progress-indicator"
-          :style="{ width: playerStore.progress + '%' }"
+          :style="{ width: progress + '%' }"
         ></div>
       </div>
+
       <div class="bar__player-block">
         <div class="bar__player player">
           <div class="player__controls">
-            <div
+            <button
               class="player__btn-prev _btn"
-              :disabled="!hasPrevTrack || !playerStore.currentTrack"
+              :disabled="!hasPrevTrack"
               @click="handlePrevTrack"
             >
               <svg class="player__btn-prev-svg">
                 <use xlink:href="/img/sprite.svg#icon-prev"></use>
               </svg>
-            </div>
-            <div
+            </button>
+            <button
               class="player__btn-play _btn"
               :class="{ 'is-playing': playerStore.isPlaying }"
               @click="handlePlay"
@@ -33,8 +34,8 @@
                   "
                 ></use>
               </svg>
-            </div>
-            <div
+            </button>
+            <button
               class="player__btn-next _btn"
               :disabled="!hasNextTrack"
               @click="handleNextTrack"
@@ -42,8 +43,8 @@
               <svg class="player__btn-next-svg">
                 <use xlink:href="/img/sprite.svg#icon-next"></use>
               </svg>
-            </div>
-            <div
+            </button>
+            <button
               class="player__btn-repeat _btn-icon"
               :class="{ 'is-active': playerStore.isLoop }"
               @click="playerStore.toggleLoop"
@@ -51,8 +52,8 @@
               <svg class="player__btn-repeat-svg">
                 <use xlink:href="/img/sprite.svg#icon-repeat"></use>
               </svg>
-            </div>
-            <div
+            </button>
+            <button
               class="player__btn-shuffle _btn-icon"
               :class="{ 'is-active': playerStore.isShuffle }"
               @click="playerStore.toggleShuffle"
@@ -60,9 +61,8 @@
               <svg class="player__btn-shuffle-svg">
                 <use xlink:href="/img/sprite.svg#icon-shuffle"></use>
               </svg>
-            </div>
+            </button>
           </div>
-
           <div class="player__track-play track-play">
             <div class="track-play__contain">
               <div class="track-play__image">
@@ -81,18 +81,12 @@
                 }}</a>
               </div>
             </div>
-
             <div class="track-play__like-dis">
-              <div class="track-play__like _btn-icon">
-                <svg class="track-play__like-svg">
-                  <use xlink:href="/img/sprite.svg#icon-like"></use>
-                </svg>
-              </div>
-              <div class="track-play__dislike _btn-icon">
-                <svg class="track-play__dislike-svg">
-                  <use xlink:href="/img/sprite.svg#icon-dislike"></use>
-                </svg>
-              </div>
+              <DisLikeButton
+                v-if="playerStore.currentTrack"
+                :track="playerStore.currentTrack"
+                :isFavoritePage="false"
+              />
             </div>
           </div>
         </div>
@@ -105,96 +99,119 @@
             </div>
             <div class="volume__progress _btn">
               <input
-                v-model="playerStore.volume"
+                v-model="volume"
                 class="volume__progress-line _btn"
                 type="range"
                 name="range"
                 min="0"
                 max="100"
-                @input="updateVolume"
+                @input="setVolume"
+                :style="volumeProgressStyle"
               />
             </div>
           </div>
         </div>
       </div>
     </div>
+
     <audio
-      ref="audioRef"
+      ref="audio"
       @timeupdate="handleTimeUpdate"
-      @ended="handleTrackEnd"
+      @ended="playerStore.onTrackEnd"
+      @loadedmetadata="handleLoadedMetadata"
     />
   </div>
 </template>
 
 <script setup>
-import { usePlayerStore } from "~/stores/player";
-import { useAudioPlayer } from "~/composables/useAudioPlayer";
+import { ref, computed, watch, onMounted } from "vue";
+import { usePlayerStore } from "@/stores/player";
+import DisLikeButton from "./DisLikeButton.vue";
 
-// Получаем store
 const playerStore = usePlayerStore();
 
-const { initPlayer, handleTimeUpdate, handleTrackEnd, seekTo, updateVolume } =
-  useAudioPlayer();
+const audio = ref(null);
+const volume = ref(playerStore.volume ?? 50);
+const shouldAutoPlay = ref(false);
 
-const audioRef = ref(null);
+const progress = computed(() => playerStore.progressPercent);
+const hasNextTrack = computed(() => playerStore.hasNextTrack);
+const hasPrevTrack = computed(() => playerStore.hasPrevTrack);
 
-const hasNextTrack = computed(() => {
-  return playerStore.hasNextTrack;
+function setVolume() {
+  playerStore.setVolume(volume.value);
+  if (audio.value) audio.value.volume = volume.value / 100;
+}
+
+const volumeProgressStyle = computed(() => {
+  const percent = volume.value;
+  return {
+    background: `linear-gradient(to right, #fff 0%, #fff ${percent}%, #797979 ${percent}%, #797979 100%)`,
+  };
 });
 
-const hasPrevTrack = computed(() => {
-  return playerStore.hasPrevTrack;
-});
-
-const handleProgressClick = (event) => {
-  const rect = event.currentTarget.getBoundingClientRect();
-  const percentage = ((event.clientX - rect.left) / rect.width) * 100;
-  seekTo(percentage);
-};
-
-const handleNextTrack = async () => {
-  try {
-    await playerStore.nextTrack();
-
-    if (playerStore.audioRef) {
-      await playerStore.audioRef.play();
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-  console.groupEnd();
-};
-
-const handlePrevTrack = async () => {
-  try {
-    await playerStore.prevTrack();
-
-    if (playerStore.audioRef) {
-      await playerStore.audioRef.play();
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-  console.groupEnd();
-};
-
-const handlePlay = () => {
-  const audio = audioRef.value;
-  if (!audio) return;
-
+function handlePlay() {
+  if (!playerStore.currentTrack) return;
   if (playerStore.isPlaying) {
-    audio.pause();
-    playerStore.isPlaying = false;
+    playerStore.pauseTrack();
   } else {
-    audio.play();
-    playerStore.isPlaying = true;
+    if (!audio.value || audio.value.readyState < 1) {
+      shouldAutoPlay.value = true;
+    } else {
+      playerStore.resumeTrack();
+    }
   }
-};
+}
 
-onMounted(() => initPlayer(audioRef.value));
+function handleNextTrack() {
+  playerStore.nextTrack();
+}
+function handlePrevTrack() {
+  playerStore.prevTrack();
+}
+
+function handleTimeUpdate() {
+  if (!audio.value) return;
+  playerStore.updateCurrentTime(audio.value.currentTime, audio.value.duration);
+}
+
+function handleProgressClick(e) {
+  if (!audio.value || !audio.value.duration) return;
+  const rect = e.currentTarget.getBoundingClientRect();
+  const percent = (e.clientX - rect.left) / rect.width;
+  playerStore.seekTo(percent);
+}
+
+onMounted(() => {
+  playerStore.setAudioRef(audio.value);
+  setVolume();
+});
+
+watch(audio, (val) => {
+  if (val) {
+    playerStore.setAudioRef(val);
+    setVolume();
+  }
+});
+
+watch(
+  () => playerStore.volume,
+  (val) => {
+    volume.value = val;
+    if (audio.value) audio.value.volume = val / 100;
+  }
+);
+
+function handleLoadedMetadata() {
+  if (shouldAutoPlay.value && audio.value) {
+    audio.value.play();
+    shouldAutoPlay.value = false;
+  }
+  playerStore.updateCurrentTime(audio.value.currentTime, audio.value.duration);
+}
 </script>
 
-<style lang="css">
+<style lang="scss" scoped>
 .bar {
   position: fixed;
   bottom: 0;
@@ -204,6 +221,7 @@ onMounted(() => initPlayer(audioRef.value));
   z-index: 1000;
   backdrop-filter: blur(10px);
 }
+
 .bar__content {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -213,6 +231,7 @@ onMounted(() => initPlayer(audioRef.value));
   -ms-flex-direction: column;
   flex-direction: column;
 }
+
 .bar__player-progress {
   position: relative;
   width: 100%;
@@ -223,10 +242,11 @@ onMounted(() => initPlayer(audioRef.value));
   .progress-indicator {
     position: absolute;
     height: 100%;
-    background: #1a73e8;
+    background: #b672ff;
     transition: width 0.2s ease;
   }
 }
+
 .bar__player-block {
   height: 73px;
   display: -webkit-box;
@@ -240,6 +260,7 @@ onMounted(() => initPlayer(audioRef.value));
   -ms-flex-pack: justify;
   justify-content: space-between;
 }
+
 .bar__player {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -255,6 +276,7 @@ onMounted(() => initPlayer(audioRef.value));
   -ms-flex-pack: start;
   justify-content: flex-start;
 }
+
 .bar__volume-block {
   width: auto;
   display: -webkit-box;
@@ -265,6 +287,7 @@ onMounted(() => initPlayer(audioRef.value));
   align-items: center;
   padding: 0 92px 0 0;
 }
+
 .player__controls {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -275,80 +298,87 @@ onMounted(() => initPlayer(audioRef.value));
   flex-direction: row;
   padding: 0 27px 0 31px;
 }
+
 .player__btn-prev,
 .player__btn-play,
 .player__btn-next,
 .player__btn-repeat,
 .player__btn-shuffle {
   padding: 5px;
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
   align-items: center;
+  transition: all 0.3s ease;
+  background-color: none;
 }
+
 .player__btn-prev {
   margin-right: 23px;
 }
+
 .player__btn-prev-svg {
   width: 15px;
   height: 14px;
 }
+
 .player__btn-play {
   margin-right: 23px;
 }
+
 .player__btn-play-svg {
   width: 22px;
   height: 20px;
   fill: #d9d9d9;
 }
+
 .player__btn-next {
   margin-right: 28px;
   fill: #a53939;
 }
+
 .player__btn-next-svg {
   width: 15px;
   height: 14px;
   fill: inherit;
   stroke: #d9d9d9;
 }
+
 .player__btn-repeat {
   margin-right: 24px;
-}
-.player__btn-repeat-svg {
-  width: 18px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
-  transition: inherit;
 
-  .is-active & {
-    stroke: #ad61ff;
-    fill: #ad61ff;
+  // Иконка повтора
+  &-svg {
+    width: 18px;
+    height: 12px;
+    fill: transparent;
+    stroke: #696969;
+    transition: inherit; // Наследуем анимацию
+
+    // Активное состояние
+    .is-active & {
+      stroke: #ad61ff;
+      fill: #ad61ff;
+    }
   }
 }
+
 .player__btn-shuffle {
-  display: -webkit-box;
-  display: -ms-flexbox;
-  display: flex;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
-  align-items: center;
-}
-.player__btn-shuffle-svg {
-  width: 19px;
-  height: 12px;
-  fill: transparent;
-  stroke: #696969;
-  transition: inherit;
+  // Иконка перемешивания
+  &-svg {
+    width: 19px;
+    height: 12px;
+    fill: transparent;
+    stroke: #696969;
+    transition: inherit; // Наследуем анимацию
 
-  .is-active & {
-    stroke: #ad61ff;
-    fill: #ad61ff;
+    // Активное состояние
+    .is-active & {
+      stroke: #ad61ff;
+      fill: #ad61ff;
+    }
   }
 }
 
+// Общие стили для активных состояний
 .is-active {
   svg {
     filter: drop-shadow(0 0 2px rgba(173, 97, 255, 0.4));
@@ -358,6 +388,7 @@ onMounted(() => initPlayer(audioRef.value));
     transform: scale(1.05);
   }
 }
+
 .player__track-play {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -367,6 +398,7 @@ onMounted(() => initPlayer(audioRef.value));
   -ms-flex-direction: row;
   flex-direction: row;
 }
+
 .track-play__contain {
   width: auto;
   display: -ms-grid;
@@ -378,6 +410,7 @@ onMounted(() => initPlayer(audioRef.value));
   -ms-flex-align: center;
   align-items: center;
 }
+
 .track-play__image {
   width: 51px;
   height: 51px;
@@ -397,18 +430,21 @@ onMounted(() => initPlayer(audioRef.value));
   grid-column: 1;
   grid-area: image;
 }
+
 .track-play__svg {
   width: 18px;
   height: 17px;
   fill: transparent;
   stroke: #4e4e4e;
 }
+
 .track-play__author {
   grid-row: 1;
   grid-column: 2;
   grid-area: author;
   min-width: 49px;
 }
+
 .track-play__author-link {
   font-style: normal;
   font-weight: 400;
@@ -417,12 +453,14 @@ onMounted(() => initPlayer(audioRef.value));
   color: #ffffff;
   white-space: nowrap;
 }
+
 .track-play__album {
   grid-row: 2;
   grid-column: 2;
   grid-area: album;
   min-width: 49px;
 }
+
 .track-play__album-link {
   font-style: normal;
   font-weight: 400;
@@ -430,38 +468,31 @@ onMounted(() => initPlayer(audioRef.value));
   line-height: 24px;
   color: #ffffff;
 }
+
 .track-play__like-dis {
-  display: -webkit-box;
-  display: -ms-flexbox;
   display: flex;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
-  -ms-flex-direction: row;
-  flex-direction: row;
-  -webkit-box-align: center;
-  -ms-flex-align: center;
+  padding-left: 31px;
   align-items: center;
-  margin-left: 26%;
 }
-.track-play__like,
-.track-play__dislike {
-  padding: 5px;
-}
+
 .track-play__like-svg {
   width: 14px;
   height: 12px;
   fill: transparent;
   stroke: #696969;
 }
+
 .track-play__dislike {
   margin-left: 28.5px;
 }
+
 .track-play__dislike-svg {
   width: 14.34px;
   height: 13px;
   fill: transparent;
   stroke: #696969;
 }
+
 .volume__content {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -477,20 +508,122 @@ onMounted(() => initPlayer(audioRef.value));
   -ms-flex-pack: end;
   justify-content: end;
 }
+
 .volume__image {
   width: 13px;
   height: 18px;
   margin-right: 17px;
 }
+
 .volume__svg {
   width: 13px;
-  height: 18px;
+  height: 13px;
   fill: transparent;
 }
+
 .volume__progress {
   width: 109px;
+  display: flex;
 }
+
 .volume__progress-line {
   width: 109px;
+  height: 1px;
+  background: transparent;
+  border-radius: 3px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  overflow: hidden;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+/* Chrome, Safari */
+.volume__progress-line::-webkit-slider-runnable-track {
+  height: 6px;
+  background: #797979;
+  border-radius: 3px;
+}
+.volume__progress-line::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+  margin-top: -4px; /* чтобы круг был по центру */
+  position: relative;
+  z-index: 2;
+}
+
+/* Заполненная белая часть */
+.volume__progress-line::-webkit-slider-runnable-track {
+  background: linear-gradient(
+    to right,
+    #fff 0%,
+    #fff calc(var(--val, 50%) * 1%),
+    #797979 calc(var(--val, 50%) * 1%),
+    #797979 100%
+  );
+}
+/* Для плавности */
+.volume__progress-line {
+  transition: background 0.2s;
+}
+
+/* Firefox */
+.volume__progress-line::-moz-range-track {
+  height: 6px;
+  background: #797979;
+  border-radius: 3px;
+}
+.volume__progress-line::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+.volume__progress-line::-moz-range-progress {
+  background: #fff;
+  height: 6px;
+  border-radius: 3px;
+}
+
+/* IE */
+.volume__progress-line::-ms-fill-lower {
+  background: #fff;
+  border-radius: 3px;
+}
+.volume__progress-line::-ms-fill-upper {
+  background: #797979;
+  border-radius: 3px;
+}
+.volume__progress-line::-ms-thumb {
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  border: none;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+}
+.volume__progress-line {
+  background: transparent;
+}
+
+/* Убираем лишний фокус и стили */
+.volume__progress-line:focus {
+  outline: none;
+}
+
+/* Для Firefox */
+.volume__progress-line::-moz-focus-outer {
+  border: 0;
 }
 </style>

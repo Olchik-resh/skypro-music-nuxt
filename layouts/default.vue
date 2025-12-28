@@ -14,7 +14,6 @@
         </div>
         <PlayerBarComponent />
       </div>
-      <!-- <footer class="footer"></footer> -->
     </template>
     <div v-else class="auth-layout">
       <slot></slot>
@@ -27,6 +26,7 @@ import MainSideBarComponent from "~/components/MainSideBarComponent.vue";
 import NavbarComponent from "~/components/NavbarComponent.vue";
 import PlayerBarComponent from "~/components/PlayerBarComponent.vue";
 import { useRoute } from "vue-router";
+import { computed } from "vue";
 
 const route = useRoute();
 
@@ -55,7 +55,7 @@ const showMainLayout = computed(() => !excludedRoutes.includes(route.path));
 .main__centerblock {
   flex: 1;
   min-width: 0;
-  padding: 20px 20px calc(111px - 20px);
+  padding: 36px 20px calc(111px - 20px);
   margin-left: 0;
 }
 </style>

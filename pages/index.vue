@@ -16,12 +16,12 @@
 
 <script setup>
 import { useTracksStore } from "~/stores/useTracks";
-import { useUserStore } from "~/stores/useUser";
 import { usePlayerStore } from "~/stores/player";
+import { useUserStore } from "~/stores/useUser";
 
 const tracksStore = useTracksStore();
-const userStore = useUserStore();
 const playerStore = usePlayerStore();
+const userStore = useUserStore();
 
 onMounted(async () => {
   if (userStore.isAuthenticated) {
@@ -40,22 +40,6 @@ onMounted(async () => {
     playerStore.setPlaylist(tracksStore.filteredTracks);
   }
 });
-
-onMounted(async () => {
-  if (tracksStore.rawTracks.length === 0) {
-    await tracksStore.fetchTracks();
-  }
-});
-
-watch(
-  () => tracksStore.filteredTracks,
-  (newTracks) => {
-    if (playerStore.playlist.length === 0 && newTracks.length) {
-      playerStore.setPlaylist(newTracks);
-    }
-  },
-  { immediate: true }
-);
 
 useHead({
   title: "Главная | Skypro.Music",

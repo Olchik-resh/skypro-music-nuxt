@@ -15,7 +15,6 @@
             </div>
           </NuxtLink>
 
-          <!-- Блок отображения ошибок -->
           <div v-if="userStore.error" class="error-message">
             {{ userStore.error }}
           </div>
@@ -25,6 +24,7 @@
             class="modal__input"
             type="email"
             placeholder="Почта"
+            autocomplete="email"
             @input="userStore.error = null"
           />
 
@@ -33,6 +33,7 @@
             class="modal__input"
             type="password"
             placeholder="Пароль"
+            autocomplete="current-password"
             @input="userStore.error = null"
           />
 
@@ -82,7 +83,6 @@ const email = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 
-// Валидация email
 const validateEmail = (email) => {
   const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return re.test(email);
@@ -108,10 +108,10 @@ const handleSubmit = async () => {
         return;
       }
 
-      // Обновленный вызов для регистрации
       await userStore.setUser({
         email: email.value,
         password: password.value,
+        confirmPassword: confirmPassword.value,
         username: email.value.split("@")[0],
       });
     } else {
@@ -120,7 +120,6 @@ const handleSubmit = async () => {
         return;
       }
 
-      // Обновленный вызов для входа
       await userStore.setUser({
         email: email.value,
         password: password.value,
@@ -133,9 +132,10 @@ const handleSubmit = async () => {
   }
 };
 
-// Очистка ошибок при размонтировании
 onMounted(() => {
-  userStore.error = null;
+  if (userStore.isAuth) {
+    userStore.clearUser();
+  }
 });
 </script>
 
