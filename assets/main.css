@@ -27,12 +27,23 @@ ul li {
   list-style: none;
 }
 
+button,
+input[type="button"],
+input[type="submit"] {
+  padding: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  appearance: none;
+}
+
 html,
 body {
   width: 100%;
   height: 100%;
   font-family: "Roboto", sans-serif;
   color: #ffffff;
+  background: #696969;
   overflow: hidden;
 }
 
@@ -177,7 +188,7 @@ body {
 .centerblock__h2 {
   font-style: normal;
   font-weight: 400;
-  font-size: 64px;
+  font-size: 60px;
   line-height: 72px;
   letter-spacing: -0.8px;
   margin-bottom: 45px;

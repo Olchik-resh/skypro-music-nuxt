@@ -14,7 +14,6 @@
         </div>
         <PlayerBarComponent />
       </div>
-      <!-- <footer class="footer"></footer> -->
     </template>
     <div v-else class="auth-layout">
       <slot></slot>
@@ -28,31 +27,19 @@ import NavbarComponent from "~/components/NavbarComponent.vue";
 import PlayerBarComponent from "~/components/PlayerBarComponent.vue";
 import { useRoute } from "vue-router";
 import { computed } from "vue";
-import { useHead } from "#imports";
 
 const route = useRoute();
 
 const excludedRoutes = ["/signin", "/signup"];
-
-const showMainLayout = computed(
-  () => !excludedRoutes.some((path) => route.path.startsWith(path))
-);
-
-useHead({
-  title: "Skypro-music",
-  meta: [
-    { name: "viewport", content: "width=device-width, initial-scale=1" },
-    { hid: "description", name: "description", content: "Описание сайта" },
-    { name: "theme-color", content: "#ffffff" },
-  ],
-  link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
-});
+const showMainLayout = computed(() => !excludedRoutes.includes(route.path));
 </script>
 
 <style lang="css">
 .wrapper {
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  min-height: 100%;
+  min-height: 100vh;
   background-color: #383838;
   font-family: "Roboto", sans-serif;
 }
@@ -68,7 +55,7 @@ useHead({
 .main__centerblock {
   flex: 1;
   min-width: 0;
-  padding: 20px 20px calc(111px - 20px);
+  padding: 36px 20px calc(111px - 20px);
   margin-left: 0;
 }
 </style>

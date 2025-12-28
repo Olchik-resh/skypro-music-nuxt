@@ -16,12 +16,12 @@
 
 <script setup>
 import { useTracksStore } from "~/stores/useTracks";
-import { useUserStore } from "~/stores/useUser";
 import { usePlayerStore } from "~/stores/player";
+import { useUserStore } from "~/stores/useUser";
 
 const tracksStore = useTracksStore();
-const userStore = useUserStore();
 const playerStore = usePlayerStore();
+const userStore = useUserStore();
 
 onMounted(async () => {
   if (userStore.isAuthenticated) {

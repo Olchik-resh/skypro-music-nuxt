@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: [
     "@nuxt/eslint",
+    "@nuxt/test-utils",
     "@pinia/nuxt",
     "@nuxtjs/google-fonts",
     "@nuxt/image",
@@ -11,5 +12,10 @@ export default defineNuxtConfig({
   css: ["assets/main.css"],
   image: {
     provider: "ipx",
+  },
+  googleFonts: {
+    families: {
+      Montserrat: [400, 700],
+    },
   },
 });

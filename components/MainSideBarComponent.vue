@@ -1,9 +1,15 @@
 <template>
   <div class="main__sidebar sidebar">
     <div class="sidebar__personal">
-      <p v-if="username && !userStore.loading">{{ username }}</p>
-      <p v-else>{{ username }}</p>
-      <NuxtLink to="/signin" class="sidebar__icon" @click="handleLogout">
+      <p v-if="userStore.hydrated && username">{{ username }}</p>
+      <p v-else-if="userStore.hydrated">Гость</p>
+      <p v-else>Загрузка...</p>
+
+      <NuxtLink
+        to="/signin"
+        class="sidebar__icon"
+        @click.prevent="handleLogout"
+      >
         <svg>
           <use xlink:href="/img/sprite.svg#logout" />
         </svg>
@@ -15,7 +21,7 @@
           v-for="playlist in playlists"
           :key="playlist.id"
           class="sidebar__item"
-          :class="{ active: route.params.id === playlist.id }"
+          :class="{ active: $route.params.id === playlist.id }"
         >
           <NuxtLink class="sidebar__link" :to="`/category/${playlist.id}`">
             <NuxtImg
@@ -31,37 +37,58 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { NuxtImg } from "#components";
 import { storeToRefs } from "pinia";
 import { useUserStore } from "~/stores/useUser";
-
+import { useRouter } from "vue-router";
+import { computed } from "vue";
 const router = useRouter();
-const route = useRoute();
+
 const userStore = useUserStore();
 const { user } = storeToRefs(userStore);
-const username = computed(() => user.value?.username || null);
 
-const handleLogout = (event) => {
-  event.preventDefault();
-  userStore.clearUser();
-  router.push("/signin");
+const username = computed(() => {
+  return user.value?.username || null;
+});
+
+const handleLogout = async () => {
+  try {
+    await userStore.clearUser();
+    if (router.currentRoute.value.path !== "/signin") {
+      router.replace("/signin");
+    }
+  } catch (error) {
+    console.error("Logout failed:", error);
+  }
 };
-
 const playlists = [
-  { id: "day", title: "Плейлист дня", image: "playlist01.png" },
-  { id: "dance", title: "100 танцевальных хитов", image: "playlist02.png" },
-  { id: "indie", title: "Инди-заряд", image: "playlist03.png" },
+  {
+    id: "day",
+    title: "Плейлист дня",
+    image: "playlist01.png",
+  },
+  {
+    id: "dance",
+    title: "100 танцевальных хитов",
+    image: "playlist02.png",
+  },
+  {
+    id: "indie",
+    title: "Инди-заряд",
+    image: "playlist03.png",
+  },
 ];
 
-const getImagePath = (imageName) => `/img/${imageName}`;
+const getImagePath = (imageName) => {
+  return `/img/${imageName}`;
+};
 </script>
 
 <style lang="css">
 .main__sidebar {
   width: 418px;
   flex: 0 0 auto;
-  padding: 20px 90px 20px 78px;
+  padding: 36px 90px 20px 78px;
 }
 .sidebar__personal {
   display: -webkit-box;
@@ -90,9 +117,9 @@ const getImagePath = (imageName) => `/img/${imageName}`;
 }
 
 .sidebar__icon {
-  width: 43px;
-  height: 43px;
-  background-color: #313131;
+  width: 40px;
+  height: 40px;
+  padding-left: 24px;
   border-radius: 50%;
   cursor: pointer;
 }

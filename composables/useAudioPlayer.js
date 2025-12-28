@@ -3,10 +3,16 @@ import { usePlayerStore } from "~/stores/player";
 export const useAudioPlayer = () => {
   const playerStore = usePlayerStore();
 
+  const removeEventListeners = () => {
+    if (!playerStore.audioRef) return;
+    playerStore.audioRef.removeEventListener("timeupdate", handleTimeUpdate);
+    playerStore.audioRef.removeEventListener("ended", handleTrackEnd);
+  };
+
   const initPlayer = (element) => {
     if (!element) return;
     playerStore.audioRef = element;
-
+    removeEventListeners();
     setupEventListeners();
   };
 

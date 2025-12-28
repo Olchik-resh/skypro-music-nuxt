@@ -2,89 +2,105 @@
   <div class="filter-container">
     <span class="filter-label">Искать по:</span>
 
-    <!-- Фильтр по исполнителю -->
     <div class="filter-group">
-      <button
-        class="filter-button"
-        :class="{ active: activeDropdown === 'author' }"
-        @click="toggleDropdown('author')"
-      >
-        Исполнителю
-        <span v-if="selectedAuthors.length" class="filter-indicator">{{
-          selectedAuthors.length
-        }}</span>
-      </button>
-      <transition name="dropdown">
-        <div v-if="activeDropdown === 'author'" class="dropdown-menu">
-          <ul class="filter-list">
-            <li
-              v-for="author in authors"
-              :key="author"
-              class="filter-item"
-              :class="{ selected: selectedAuthors.includes(author) }"
-              @click="toggleFilterValue('author', author)"
-            >
-              {{ author }}
-            </li>
-          </ul>
+      <div class="filter-header">
+        <button
+          class="filter-button"
+          :class="{ active: activeDropdown === 'authors' }"
+          @click="toggleDropdown('authors')"
+        >
+          Исполнителю
+          <span v-if="selectedAuthors.length" class="filter-indicator">
+            {{ selectedAuthors.length }}
+          </span>
+        </button>
+      </div>
+      <transition name="dropdown" class="dropdown-authors">
+        <div v-if="activeDropdown === 'authors'" class="dropdown-menu">
+          <div class="dropdown-scroll">
+            <ul class="filter-list">
+              <li
+                v-for="author in availableAuthors"
+                :key="author"
+                class="filter-item"
+                :class="{ selected: selectedAuthors.includes(author) }"
+                @click="handleAuthorSelect(author)"
+              >
+                <span
+                  :class="{ visible: selectedAuthors.includes(author) }"
+                ></span>
+                {{ author }}
+              </li>
+            </ul>
+          </div>
         </div>
       </transition>
     </div>
 
-    <!-- Фильтр по году -->
     <div class="filter-group">
-      <button
-        class="filter-button"
-        :class="{ active: activeDropdown === 'year' }"
-        @click="toggleDropdown('year')"
-      >
-        Году
-        <span v-if="selectedYears.length" class="filter-indicator">{{
-          selectedYears.length
-        }}</span>
-      </button>
-      <transition name="dropdown">
-        <div v-if="activeDropdown === 'year'" class="dropdown-menu">
-          <ul class="filter-list">
-            <li
-              v-for="year in years"
-              :key="year"
-              class="filter-item"
-              :class="{ selected: selectedYears.includes(year) }"
-              @click="toggleFilterValue('year', year)"
-            >
-              {{ year }}
-            </li>
-          </ul>
+      <div class="filter-header">
+        <button
+          class="filter-button"
+          :class="{ active: activeDropdown === 'years' }"
+          @click="toggleDropdown('years')"
+        >
+          Году
+          <span v-if="selectedYears.length" class="filter-indicator">
+            {{ selectedYears.length }}
+          </span>
+        </button>
+      </div>
+      <transition name="dropdown" class="dropdown-years">
+        <div v-if="activeDropdown === 'years'" class="dropdown-menu">
+          <div class="dropdown-scroll">
+            <ul class="filter-list">
+              <li
+                v-for="year in availableYears"
+                :key="year"
+                class="filter-item"
+                :class="{ selected: selectedYears.includes(year) }"
+                @click="handleYearSelect(year)"
+              >
+                <span :class="{ visible: selectedYears.includes(year) }"></span>
+                {{ year }}
+              </li>
+            </ul>
+          </div>
         </div>
       </transition>
     </div>
 
-    <!-- Фильтр по жанру -->
     <div class="filter-group">
-      <button
-        class="filter-button"
-        :class="{ active: activeDropdown === 'genre' }"
-        @click="toggleDropdown('genre')"
-      >
-        Жанру
-        <span v-if="selectedGenres.length" class="filter-indicator">{{
-          selectedGenres.length
-        }}</span>
-      </button>
-      <transition name="dropdown">
-        <div v-if="activeDropdown === 'genre'" class="dropdown-menu">
-          <ul class="filter-list">
-            <li
-              v-for="genre in genres"
-              :key="genre"
-              class="filter-item"
-              :class="{ selected: selectedGenres.includes(genre) }"
-              @click="toggleFilterValue('genre', genre)"
-            >
-              {{ genre }}
-            </li>
-          </ul>
+      <div class="filter-header">
+        <button
+          class="filter-button"
+          :class="{ active: activeDropdown === 'genres' }"
+          @click="toggleDropdown('genres')"
+        >
+          Жанру
+          <span v-if="selectedGenres.length" class="filter-indicator">
+            {{ selectedGenres.length }}
+          </span>
+        </button>
+      </div>
+      <transition name="dropdown" class="dropdown-genres">
+        <div v-if="activeDropdown === 'genres'" class="dropdown-menu">
+          <div class="dropdown-scroll">
+            <ul class="filter-list">
+              <li
+                v-for="genre in availableGenres"
+                :key="genre"
+                class="filter-item"
+                :class="{ selected: selectedGenres.includes(genre) }"
+                @click="handleGenreSelect(genre)"
+              >
+                <span
+                  :class="{ visible: selectedGenres.includes(genre) }"
+                ></span>
+                {{ genre }}
+              </li>
+            </ul>
+          </div>
         </div>
       </transition>
     </div>
@@ -98,36 +114,30 @@ import { useTracksStore } from "~/stores/useTracks";
 const tracksStore = useTracksStore();
 const activeDropdown = ref(null);
 
-const authors = computed(() =>
-  [...new Set(tracksStore.rawTracks.map((t) => t.author))].sort()
-);
-const years = computed(() =>
-  [...new Set(tracksStore.rawTracks.map((t) => t.release_date))].sort(
-    (a, b) => b - a
-  )
-);
-const genres = computed(() =>
-  [...new Set(tracksStore.rawTracks.flatMap((t) => t.genre))].sort()
-);
+const availableAuthors = computed(() => tracksStore.availableFilters.authors);
+const availableYears = computed(() => tracksStore.availableFilters.years);
+const availableGenres = computed(() => tracksStore.availableFilters.genres);
 
-const selectedAuthors = computed(() => tracksStore.filters.author || []);
-const selectedYears = computed(() => tracksStore.filters.year || []);
-const selectedGenres = computed(() => tracksStore.filters.genre || []);
+const selectedAuthors = computed(() => tracksStore.filters.authors);
+const selectedYears = computed(() => tracksStore.filters.years);
+const selectedGenres = computed(() => tracksStore.filters.genres);
 
 const toggleDropdown = (type) => {
   activeDropdown.value = activeDropdown.value === type ? null : type;
 };
 
-function toggleFilterValue(type, value) {
-  const arr = Array.isArray(tracksStore.filters[type])
-    ? [...tracksStore.filters[type]]
-    : [];
-  const idx = arr.indexOf(value);
-  if (idx > -1) arr.splice(idx, 1);
-  else arr.push(value);
+const toggleFilter = (type, value) => {
+  const currentValues = [...tracksStore.filters[type]];
+  const newValues = currentValues.includes(value)
+    ? currentValues.filter((v) => v !== value)
+    : [...currentValues, value];
 
-  tracksStore.updateFilter({ [type]: arr });
-}
+  tracksStore.updateFilter({ [type]: newValues });
+};
+
+const handleAuthorSelect = (author) => toggleFilter("authors", author);
+const handleYearSelect = (year) => toggleFilter("years", year);
+const handleGenreSelect = (genre) => toggleFilter("genres", genre);
 </script>
 
 <style lang="css">
@@ -143,7 +153,7 @@ function toggleFilterValue(type, value) {
 .filter-label {
   font-size: 16px;
   color: rgba(255, 255, 255, 1);
-  margin-right: 8px;
+  margin-right: 3px;
 }
 
 .filter-group {
@@ -183,31 +193,85 @@ function toggleFilterValue(type, value) {
   line-height: 22px;
   pointer-events: none;
 }
+.dropdown-authors {
+  width: 248px;
+  height: 305px;
+}
+.dropdown-years {
+  width: 248px;
+  height: 305px;
+}
+.dropdown-genres {
+  width: 248px;
+  height: 305px;
+}
 
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  background: #333333;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 1000;
-  min-width: 180px;
-  max-height: 240px;
-
+.dropdown-scroll {
+  max-height: 237px;
   overflow-y: auto;
+}
+
+/* Скрыть стрелки скроллбара (Chrome, Edge, Safari) */
+.dropdown-scroll::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.dropdown-scroll::-webkit-scrollbar-button:single-button {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.dropdown-scroll::-webkit-scrollbar-button:vertical:decrement,
+.dropdown-scroll::-webkit-scrollbar-button:vertical:increment {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+/* Ширина скроллбара */
+.dropdown-scroll::-webkit-scrollbar {
+  width: 4px;
+  background: #4b4949;
+  border-radius: 10px;
+}
+
+/* Цвет и скругление ползунка */
+.dropdown-scroll::-webkit-scrollbar-thumb {
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+/* Для Firefox */
+.dropdown-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff #4b4949;
+}
+.dropdown-menu {
+  min-width: 180px;
+  padding: 34px;
+  padding-right: 34px;
+  background: rgba(49, 49, 49, 1);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
+  margin-top: 8px;
+  z-index: 20;
+  position: absolute;
 }
 
 .filter-list {
   list-style: none;
-  padding: 6px 0;
   margin: 0;
 }
 
 .filter-item {
-  padding: 8px 16px;
-  font-size: 13px;
-  color: #d0d0d0;
+  padding-bottom: 28px;
+  font-size: 20px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -216,17 +280,6 @@ function toggleFilterValue(type, value) {
 .filter-item.selected {
   color: #ad61ff;
   text-decoration: underline;
-}
-
-.selection-dot {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 6px;
-  height: 6px;
-  background: currentColor;
-  border-radius: 50%;
 }
 
 .dropdown-enter-active,
