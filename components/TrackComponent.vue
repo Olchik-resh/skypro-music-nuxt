@@ -1,10 +1,14 @@
 <template>
-  <div class="playlist__item" @click="handleTrackClick">
-    <div class="playlist__track track">
+  <div class="playlist__item">
+    <div class="playlist__track track" @click="handleTrackClick">
       <div class="track__title">
         <div class="track__title-image">
-          <div v-if="isActive" class="playing-dot"></div>
-          <svg class="track__title-svg" :class="{ 'active-track': isActive }">
+          <div v-if="isPlayingTrack" class="playing-dot"></div>
+          <svg
+            v-else
+            class="track__title-svg"
+            :class="{ 'active-track': isActive }"
+          >
             <use xlink:href="/img/sprite.svg#icon-note"></use>
           </svg>
         </div>
@@ -31,9 +35,14 @@
         </a>
       </div>
       <div class="track__time">
-        <svg class="track__time-svg">
-          <use xlink:href="/img/sprite.svg#icon-like"></use>
-        </svg>
+        <DisLikeButton
+          @click.stop
+          :show-count="true"
+          :track="track"
+          :is-favorite-page="isFavoritePage"
+          class="track__like-button"
+          @toggle-favorite="handleToggleFavorite"
+        />
         <span class="track__time-text">{{ track.duration }}</span>
       </div>
     </div>
@@ -41,48 +50,24 @@
 </template>
 
 <script setup>
-const props = defineProps({
-  track: {
-    type: Object,
-    required: true,
-    default: () => ({
-      id: 0,
-      title: "",
-      author: "",
-      album: "",
-      duration: "",
-      genre: "",
-      year: 0,
-      track_file: "",
-    }),
-  },
-});
-
+import DisLikeButton from "./DisLikeButton.vue";
+import { computed } from "vue";
+import { usePlayerStore } from "@/stores/player";
 const playerStore = usePlayerStore();
 
-const handleTrackClick = async () => {
-  try {
-    if (!props.track.track_file) {
-      return;
-    }
-
-    if (!playerStore.audioRef) {
-      playerStore.setAudioRef(new Audio());
-    }
-
-    playerStore.setCurrentTrack(props.track);
-    playerStore.audioRef.src = props.track.track_file;
-    await playerStore.audioRef.play();
-    playerStore.setPlaying(true);
-  } catch (error) {
-    console.error("Ошибка воспроизведения:", error);
-    playerStore.setPlaying(false);
-  }
-};
+const props = defineProps({
+  track: { type: Object, required: true },
+  isFavoritePage: { type: Boolean, default: false },
+});
+const emit = defineEmits(["toggle-favorite", "play"]);
+const handleToggleFavorite = (trackId, isFavorite) =>
+  emit("toggle-favorite", trackId, isFavorite);
+const handleTrackClick = () => emit("play", props.track);
 
 const isActive = computed(
-  () => playerStore.currentTrack?.id === props.track.id && playerStore.isPlaying
+  () => playerStore.currentTrack?.id === props.track.id
 );
+const isPlayingTrack = computed(() => isActive.value && playerStore.isPlaying);
 </script>
 
 <style lang="css" scoped>
@@ -231,5 +216,15 @@ const isActive = computed(
   line-height: 24px;
   text-align: right;
   color: #696969;
+}
+
+.track__time {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Добавили отступы между компонентами */
+}
+
+.track__like-button {
+  margin-right: 10px; /* Отступ перед временем трека */
 }
 </style>

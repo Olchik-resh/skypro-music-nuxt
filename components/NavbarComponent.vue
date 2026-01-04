@@ -10,18 +10,20 @@
         quality="100"
       />
     </div>
+
     <div class="nav__burger burger" @click="toggleMenu">
       <span class="burger__line"></span>
       <span class="burger__line"></span>
       <span class="burger__line"></span>
     </div>
 
-    <!-- Меню -->
     <div v-if="isMenuVisible" class="nav__menu menu">
       <ul class="menu__list">
-        <li class="menu__item"><a href="/" class="menu__link">Главное</a></li>
         <li class="menu__item">
-          <a href="#" class="menu__link">Мой плейлист</a>
+          <a href="/" class="menu__link">Главное</a>
+        </li>
+        <li class="menu__item">
+          <a href="/favorites" class="menu__link">Мой плейлист</a>
         </li>
         <li class="menu__item">
           <a href="/signin" class="menu__link">Войти</a>
@@ -41,23 +43,21 @@ const toggleMenu = () => {
 };
 </script>
 
-<style lang="css">
+<style lang="scss" scoped>
 .main__nav {
   width: 244px;
-
   background-color: #181818;
-  padding: 20px;
+  padding: 36px;
 }
 
 .nav__logo {
   width: 113.33px;
-  margin-bottom: 20px;
+  margin-bottom: 46px;
 }
 
 .nav__burger {
   width: 20px;
-  height: 36px;
-  padding: 13px 0;
+  height: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -89,7 +89,6 @@ const toggleMenu = () => {
 
 .menu__link {
   color: #ffffff;
-
   font-size: 16px;
   line-height: 24px;
 }
