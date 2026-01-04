@@ -9,8 +9,15 @@ export const formatDuration = (seconds) => {
 };
 
 export const filterTracks = (tracks, filters = {}) => {
-  const { authors = [], genres = [], years = [], search = "" } = filters;
+  if (filters === null) {
+    filters = {};
+  }
 
+  const { author = "", genre = "", year = "", search = "" } = filters;
+
+  const authors = author ? (Array.isArray(author) ? author : [author]) : [];
+  const genres = genre ? (Array.isArray(genre) ? genre : [genre]) : [];
+  const years = year ? (Array.isArray(year) ? year : [year]) : [];
   const searchLower = search.toLowerCase();
 
   return tracks.filter((track) => {
@@ -18,7 +25,6 @@ export const filterTracks = (tracks, filters = {}) => {
       track.title.toLowerCase().includes(searchLower) ||
       track.author.toLowerCase().includes(searchLower);
 
-   
     const matchesAuthor =
       authors.length === 0 || authors.includes(track.author);
     const matchesYear =
@@ -54,8 +60,8 @@ export const updateFilters = (currentFilters, newFilters) => ({
 });
 
 export const resetFilters = () => ({
-  author: "",
-  genre: "",
-  year: "",
+  author: [],
+  year: [],
+  genre: [],
   search: "",
 });

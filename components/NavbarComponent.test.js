@@ -35,7 +35,7 @@ describe("NavBarComponent", () => {
     const links = wrapper.findAll(".menu__link");
     const expectedLinks = [
       { text: "Главное", href: "/" },
-      { text: "Мой плейлист", href: "#" },
+      { text: "Мой плейлист", href: "/favorites" }, 
       { text: "Войти", href: "/signin" },
     ];
 
